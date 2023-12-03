@@ -1,24 +1,29 @@
-import Dynamo from "aws-sdk/clients/dynamodb";
-import { v4 as uuid } from "uuid";
-import { TPayload, TPayloadCreateRequest } from "../types/payload";
+import aws from "aws-sdk";
+import { TPayload } from "../types/payload";
+import dotenv from "dotenv";
+
+dotenv.config();
 
 const tableName = "payloads";
-const db = new Dynamo.DocumentClient({
+const db = new aws.DynamoDB.DocumentClient({
   region: "sa-east-1",
+  credentials: {
+    accessKeyId: process.env.ACCESS_KEY || "",
+    secretAccessKey: process.env.SECRET_ACCESS_KEY || "",
+  },
 });
 
-async function create(body: TPayloadCreateRequest) {
-  const params = { TableName: tableName, Item: body };
-
-  const res: TPayload = { ...body, idempotencyId: uuid() };
+async function search(terms?: Partial<TPayload>) {
+  const params = { TableName: tableName, Key: terms || {} };
 
   try {
-    db.put(params);
-    return res;
+    const data = terms
+      ? await db.get(params).promise()
+      : await db.scan({ TableName: tableName }).promise();
+    return data;
   } catch (err) {
-    console.log(err);
-    return null;
+    return err;
   }
 }
 
-export const payloadDB = { create };
+export const payloadDB = { search };

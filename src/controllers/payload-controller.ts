@@ -3,6 +3,7 @@ import aws from "aws-sdk";
 import dotenv from "dotenv";
 import { v4 as uuid } from "uuid";
 import { TPayload } from "../types/payload";
+import { payloadDB } from "../database/payload-db";
 
 dotenv.config();
 
@@ -52,7 +53,27 @@ const post = router.post("/", (req: Request, res: Response) => {
   );
 });
 
-const get = router.get("/", (req: Request, res: Response) => {});
+const get = router.get("/", async (req: Request, res: Response) => {
+  try {
+    const data = await payloadDB.search();
+
+    if (data) {
+      return res.send({
+        success: true,
+        message: "Sucesso!",
+        data,
+      });
+    } else {
+      throw { message: "Nenhum dado encontrado." };
+    }
+  } catch (err) {
+    res.send({
+      success: false,
+      message: "Erro!",
+      error: err,
+    });
+  }
+});
 
 export const payload = { router, post, get };
 
