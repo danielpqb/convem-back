@@ -1,12 +1,15 @@
 import express from "express";
-import aws from "aws-sdk";
+import dotenv from "dotenv";
+import { payload } from "./controllers/payload-controller";
+
+dotenv.config();
 
 const app = express();
-const folder = process.env.PWD;
 
-app.use(express.static(folder || ""));
 app.use(express.json());
 
-const sqs = new aws.SQS();
+app.use("/payload", payload.router);
 
-aws.config.update({ region: "sa-east-1" });
+app.listen(4000, () => {
+  console.log("Server listening on port 4000");
+});
